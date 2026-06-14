@@ -194,6 +194,14 @@
   .dg .cyl-top{fill:#143a26;stroke:var(--green);stroke-width:2}
   .dg .legend{fill:var(--green);font-family:var(--mono);font-weight:700}
 
+  /* ---------- DEMO slide (live-bot screenshots, kept in reserve for Q&A) ---------- */
+  .demo{display:flex;gap:40px;justify-content:center;align-items:flex-start;margin-top:6px}
+  .demo figure{margin:0;display:flex;flex-direction:column;align-items:center}
+  .demo img{max-height:430px;width:auto;border:1px solid var(--green-dim);border-radius:12px;
+        box-shadow:0 12px 44px rgba(0,0,0,.5);background:#0c1a12}
+  .demo figcaption{margin-top:13px;font-size:16px;color:var(--muted);line-height:1.34;text-align:center;max-width:380px}
+  .demo figcaption b{color:var(--green);font-weight:700}
+
   /* ---------- NAV ---------- */
   #counter{position:fixed;right:16px;bottom:12px;color:var(--muted);font-family:var(--mono);font-size:13px;z-index:10}
   #hint{position:fixed;left:16px;bottom:12px;color:#33493b;font-family:var(--mono);font-size:12px;z-index:10}
@@ -695,6 +703,19 @@
       <div class="qr"><img src="qr.png" alt="QR to repo" style="width:100%;height:100%;object-fit:contain;border-radius:7px"/></div>
     </div>
     <div class="foot"><div class="brand"><img src="logo.png"/><b>[<span>AI</span>]mbassy</b></div><div>Roadmap &amp; scale</div></div></section>
+
+  <section class="slide tight"><div class="kicker">11 · Demo</div><h1 class="title">Live demo &mdash; <span class="hl">in reserve</span></h1><hr class="rule"/>
+    <div class="demo">
+      <figure>
+        <img src="Guardrail%20example.png" alt="Guardrail demo: off-topic and injection refused, PII scrubbed"/>
+        <figcaption><b>Guardrail.</b> Off-topic, abuse and prompt-injection are refused; PII (name, passport, phone, address) is scrubbed before anything is stored.</figcaption>
+      </figure>
+      <figure>
+        <img src="User%20query%20example.png" alt="Real legalization question answered with exact paragraph citations"/>
+        <figcaption><b>Real answer.</b> A Russian legalization question answered point-by-point, each claim tied to the exact &sect; of Austrian law.</figcaption>
+      </figure>
+    </div>
+    <div class="foot"><div class="brand"><img src="logo.png"/><b>[<span>AI</span>]mbassy</b></div><div>Live demo</div></div></section>
 
 </div>
 

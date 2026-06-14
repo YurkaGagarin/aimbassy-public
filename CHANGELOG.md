@@ -46,3 +46,4 @@ This public repo is a curated snapshot (no git history). The commit-by-commit de
 - Prep repo for submission: add README and requirements, untrack internal journals, anonymize case city names, finalize bot handle on deck
 - Untrack internal agent config (POC/CLAUDE.md) from repo
 - Finalize slide 11: public repo link and QR code
+- Add slide 12: live-bot demo screenshots (guardrail + grounded answer) for Q&A
