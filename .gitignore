@@ -1,0 +1,53 @@
+# === Секреты / креды (НИКОГДА не коммитим) ===
+.env
+.env.*
+!.env.example
+*-key.json
+*-credentials.json
+service-account*.json
+*.pem
+*.key
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+.pytest_cache/
+
+# === RAG / векторное хранилище (артефакты, не исходники) ===
+.chroma/
+chroma/
+chromadb/
+*.sqlite3
+
+# === Данные / PII (корпус, кейсы) — держим вне репо ===
+data/
+POC/data/
+# eval-артефакты, в которые попадает retrieved_context (текст кейсов) — не публикуем.
+# Регенерируются харнессом; публикуем только код, баллы судей и отчёты.
+POC/eval/answers.jsonl
+POC/eval/judge_inputs.jsonl
+POC/eval/answers_rewrite.jsonl
+POC/eval/judge_inputs_rewrite.jsonl
+POC/eval/answers_enriched.jsonl
+POC/eval/judge_inputs_enriched.jsonl
+POC/eval/answers_stack.jsonl
+POC/eval/judge_inputs_stack.jsonl
+POC/eval/answers_flash.jsonl
+POC/eval/judge_inputs_flash.jsonl
+
+# === OS / IDE ===
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+# === Внутренние рабочие журналы / конфиг агента — не в публичный репо (файлы остаются на диске) ===
+POC/CONTEXT.md
+POC/MEMORY.md
+POC/PITCH_NOTES.md
+POC/CLAUDE.md

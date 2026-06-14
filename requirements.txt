@@ -1,0 +1,16 @@
+# [AI]mbassy POC — Python dependencies (tested on Python 3.13)
+# Install:
+#   python -m venv .venv && source .venv/bin/activate
+#   pip install -r requirements.txt
+#
+# Gemini / Vertex AI, Google DLP and BigQuery are accessed over REST using a
+# gcloud auth token (see README), so no Google client SDK is required here.
+# The gcloud CLI is a system prerequisite, not a pip dependency.
+
+langgraph==1.2.4              # pipeline orchestration (typed graph state)
+chromadb==1.5.9              # vector store (POC)
+python-telegram-bot==22.7   # Telegram interface (polling)
+streamlit==1.58.0           # local debug / demo panel
+requests==2.34.2            # Vertex / DLP / BigQuery REST calls
+python-dotenv==1.2.2        # .env config loading
+openpyxl==3.1.5             # reading .xlsx source / corpus spreadsheets

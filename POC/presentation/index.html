@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>[AI]mbassy — Final Project</title>
+<style>
+  /* ---------- THEME (palette echoes the logo: neon green on near-black) ---------- */
+  :root{
+    --bg:#070b08;
+    --bg2:#0b130d;
+    --ink:#eaf2ec;          /* primary text */
+    --muted:#8aa394;        /* secondary text */
+    --green:#3df27e;        /* neon accent */
+    --green-dim:#1f6b40;
+    --line:#1d2a21;
+    --card:#0e1712;
+    /* Fonts: 2 families (sans + mono). Headings reuse the sans, styled. = <=3 per slide. */
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    --mono:"SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:#000;color:var(--ink);font-family:var(--sans)}
+
+  /* ---------- STAGE: fixed 1280x720, scaled to viewport for pixel control ---------- */
+  #stage{
+    position:fixed;left:50%;top:50%;width:1280px;height:720px;
+    transform:translate(-50%,-50%) scale(var(--scale,1));
+    transform-origin:center center;
+  }
+  .slide{
+    position:absolute;inset:0;display:none;
+    padding:64px 84px 80px;   /* reserve a bottom band so content never reaches the footer */
+    background:
+      radial-gradient(1200px 500px at 80% -10%, rgba(61,242,126,.10), transparent 60%),
+      radial-gradient(900px 600px at -10% 120%, rgba(61,242,126,.06), transparent 55%),
+      linear-gradient(180deg,var(--bg),var(--bg2));
+    overflow:hidden;
+  }
+  .slide.active{display:block}
+
+  /* ---------- SHARED SLIDE FURNITURE ---------- */
+  .kicker{font-size:18px;letter-spacing:.32em;text-transform:uppercase;color:var(--green);font-weight:700}
+  h1.title{font-size:54px;line-height:1.05;margin:14px 0 26px;font-weight:800;letter-spacing:-.01em}
+  h1.title .hl{color:var(--green)}
+  .rule{height:3px;width:120px;background:linear-gradient(90deg,var(--green),transparent);border:0;margin:0 0 26px}
+  .foot{position:absolute;left:84px;right:84px;bottom:18px;display:flex;align-items:center;
+        justify-content:space-between;color:var(--muted);font-size:14px;border-top:1px solid var(--line);padding-top:8px}
+  .foot .brand{display:flex;align-items:center;gap:10px}
+  .foot .brand img{height:24px;width:24px;border-radius:5px}
+  .foot .brand b{color:var(--ink);font-weight:700}
+  .foot .brand b span{color:var(--green)}
+
+  ul.points{list-style:none;display:flex;flex-direction:column;gap:18px;font-size:25px;line-height:1.34;max-width:1000px}
+  ul.points li{position:relative;padding-left:34px;color:var(--ink)}
+  ul.points li::before{content:"";position:absolute;left:0;top:12px;width:12px;height:12px;
+        background:var(--green);transform:rotate(45deg);box-shadow:0 0 12px rgba(61,242,126,.6)}
+  .muted{color:var(--muted)}
+  .em{color:var(--green);font-weight:700}
+  code,.mono{font-family:var(--mono)}
+
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:40px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px 28px}
+  .card h3{font-size:21px;letter-spacing:.04em;text-transform:uppercase;color:var(--green);margin-bottom:14px}
+  .card ul{list-style:none;display:flex;flex-direction:column;gap:12px;font-size:21px;line-height:1.3}
+  .card ul li{padding-left:24px;position:relative}
+  .card ul li::before{content:"›";position:absolute;left:0;color:var(--green);font-weight:800}
+
+  .statement{margin-top:26px;font-size:27px;line-height:1.3;border-left:4px solid var(--green);
+        padding:14px 22px;background:rgba(61,242,126,.05);border-radius:0 10px 10px 0}
+
+  /* ---------- TITLE SLIDE ---------- */
+  .cover{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;height:100%;padding:0 80px}
+  .cover img.logo{width:285px;height:285px;border-radius:30px;box-shadow:0 0 70px rgba(61,242,126,.28);margin-bottom:22px}
+  .cover .name{font-size:78px;font-weight:900;letter-spacing:-.02em}
+  .cover .name .b{color:var(--green)}
+  .cover .tag{font-size:30px;color:var(--ink);margin-top:10px;font-weight:600}
+  .cover .sub{font-size:21px;color:var(--muted);margin-top:18px;max-width:900px;line-height:1.4}
+  .cover .meta{margin-top:30px;font-size:16px;color:var(--muted);letter-spacing:.04em}
+  .cover .by{font-family:var(--mono);color:var(--green-dim)}
+
+  /* requirements map table */
+  table.req{border-collapse:collapse;width:100%;margin-top:8px;font-size:19px}
+  table.req td{border:1px solid var(--line);padding:11px 14px;vertical-align:top}
+  table.req td.k{color:var(--green);font-weight:700;white-space:nowrap;width:34%}
+  table.req td .pct{color:var(--muted);font-family:var(--mono);font-size:15px}
+
+  .todo{display:inline-block;font-family:var(--mono);font-size:13px;color:#0a0;background:rgba(61,242,126,.12);
+        border:1px dashed var(--green-dim);border-radius:6px;padding:1px 7px;color:var(--green)}
+
+  /* compact variant for content-dense slides (People's Embassies) */
+  .slide.compact .card ul{font-size:19px;gap:10px}
+  .slide.compact .statement{margin-top:16px;font-size:23px;padding:12px 20px}
+
+  /* tight header for diagram / content slides — raises the title, frees vertical room */
+  .slide.tight{padding-top:42px}
+  .slide.tight h1.title{font-size:42px;margin:8px 0 16px}
+  .slide.tight .rule{margin-bottom:16px}
+
+  /* placeholder canvas (where a diagram / table will go next iteration) */
+  .stub{margin-top:6px;height:432px;border:1.5px dashed var(--green-dim);border-radius:14px;
+        display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+        text-align:center;padding:0 50px;background:rgba(61,242,126,.03)}
+  .stub .big{font-size:30px;color:var(--ink)}
+  .stub .note{margin-top:0;font-size:17px;color:var(--green-dim);font-family:var(--mono);max-width:820px}
+
+  /* ---------- GUARDRAIL slide (mini-flow + 3 check cards) ---------- */
+  .flow{display:flex;align-items:center;justify-content:center;gap:10px;margin:2px 0 12px}
+  .flow .step{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 14px;
+        text-align:center;min-width:155px}
+  .flow .step.io{border-color:var(--green)}
+  .flow .step b{font-size:16px;color:var(--ink)}
+  .flow .step.io b{color:var(--green)}
+  .flow .step small{display:block;color:var(--muted);font-family:var(--mono);font-size:12px;margin-top:3px}
+  .flow .arr{color:var(--green);font-size:24px;font-weight:800}
+  .flow .split{display:flex;flex-direction:column;gap:8px}
+  .cols3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:22px}
+  .cols3 .card{padding:18px 20px}
+  .cols3 .card h3{font-size:18px;margin-bottom:6px}
+  .cols3 .card .mtag{font-family:var(--mono);font-size:12px;color:var(--green);border:1px solid var(--green-dim);
+        border-radius:6px;padding:1px 8px;display:inline-block;margin-bottom:8px;background:rgba(61,242,126,.07)}
+  .cols3 .card ul{font-size:15px;gap:8px}
+  .pii{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}
+  .pii span{font-family:var(--mono);font-size:11.5px;color:var(--green);border:1px solid var(--green-dim);
+        border-radius:6px;padding:1px 6px;background:rgba(61,242,126,.07)}
+
+  /* ---------- METRICS slide (hero KPIs + levers table) ---------- */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin:6px 0 20px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;text-align:center}
+  .stat .big{font-size:40px;font-weight:900;color:var(--green);line-height:1}
+  .stat .from{font-family:var(--mono);font-size:13px;color:var(--muted);margin-top:5px}
+  .stat .lbl{font-size:14px;color:var(--ink);margin-top:7px;line-height:1.25}
+  table.levers{width:100%;border-collapse:collapse;font-size:16px}
+  table.levers th,table.levers td{border:1px solid var(--line);padding:9px 14px;vertical-align:top;text-align:left}
+  table.levers th{color:var(--green);font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+  table.levers td.l{color:var(--green);font-weight:700;width:23%}
+  table.levers td.m{font-family:var(--mono);font-size:13.5px;width:31%;color:var(--ink)}
+  table.levers td.w{color:var(--muted);font-size:15px}
+
+  /* ---------- REGRESSIONS slide (honest findings, amber accent) ---------- */
+  .lead{font-size:18px;color:var(--ink);margin:0 0 14px;line-height:1.3}
+  .cols3 .card.warn{border-color:#5a4a22}
+  .cols3 .card.warn h3{color:#f2b53d}
+  .dchip{display:inline-block;font-family:var(--mono);font-size:12.5px;font-weight:700;color:#f2b53d;
+        border:1px solid #6b561f;border-radius:6px;padding:2px 8px;margin:2px 0 10px;background:rgba(242,181,61,.09)}
+  .cols3 .card .body{font-size:14.5px;color:var(--muted);line-height:1.4}
+
+  /* ---------- WEAKNESSES slide (weakness -> fix table) ---------- */
+  table.fixtbl{width:100%;border-collapse:collapse;font-size:15.5px}
+  table.fixtbl th,table.fixtbl td{border:1px solid var(--line);padding:11px 16px;vertical-align:top;text-align:left}
+  table.fixtbl th{color:var(--green);font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+  table.fixtbl td.wk{width:42%;color:var(--muted);font-size:14.5px;line-height:1.35}
+  table.fixtbl td.wk b{color:#f2b53d;font-size:16px;display:block;margin-bottom:4px}
+  table.fixtbl td.fx{color:var(--muted);line-height:1.38}
+  table.fixtbl td.fx .k{color:var(--green);font-weight:700}
+
+  /* ---------- ROADMAP slide (4 cards + call-to-action) ---------- */
+  .cols4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+  .cols4 .card{padding:24px 22px;min-height:316px;display:flex;flex-direction:column;justify-content:center}
+  .cols4 .card .rmnum{font-family:var(--mono);font-size:14px;color:var(--green);font-weight:700;letter-spacing:.12em;margin-bottom:12px}
+  .cols4 .card h3{font-size:19px;margin-bottom:14px;text-transform:none;letter-spacing:0}
+  .cols4 .card .body{font-size:15px;color:var(--muted);line-height:1.5}
+  .cols4 .card .imp{margin-top:16px;font-size:13.5px;color:var(--green);font-family:var(--mono);line-height:1.32}
+  .cta{margin-top:24px;display:flex;align-items:center;justify-content:space-between;gap:28px;
+        background:rgba(61,242,126,.07);border:1px solid var(--green-dim);border-radius:14px;padding:22px 30px}
+  .cta .l{font-size:21px;color:var(--ink);font-weight:600;line-height:1.34}
+  .cta .l b{color:var(--green)}
+  .cta .links{font-family:var(--mono);font-size:15px;color:var(--muted);display:flex;flex-direction:column;gap:9px;flex:none}
+  .cta .links b{color:var(--ink);font-weight:700}
+  .cta .qr{width:92px;height:92px;border:1.5px dashed var(--green-dim);border-radius:10px;display:flex;
+        align-items:center;justify-content:center;color:var(--green-dim);font-family:var(--mono);font-size:13px;flex:none}
+
+  /* ---------- DIAGRAMS (hand-authored SVG, drawio-style boustrophedon flow) ---------- */
+  .dg .box{fill:var(--card);stroke:var(--green-dim);stroke-width:1.5}
+  .dg .box.dec{stroke:var(--green);stroke-width:2}        /* branch / decision node */
+  .dg .box.io{fill:#0c1a12;stroke:var(--green);stroke-width:2}  /* input / output */
+  .dg .box.aux{fill:#0a130d;stroke:#33493b;stroke-width:1.5;stroke-dasharray:6 5}
+  .dg .t{fill:var(--ink);font-weight:700}
+  .dg .s{fill:var(--muted);font-family:var(--mono)}
+  .dg .num{fill:#06140c;font-weight:800}
+  .dg .numbg{fill:var(--green)}
+  .dg .dec-glyph{fill:none;stroke:var(--green);stroke-width:2}
+  .dg .edge{stroke:var(--green);stroke-width:2.2;fill:none}
+  .dg .edge.alt{stroke:#5c8f6e;stroke-width:2;stroke-dasharray:7 5}
+  .dg .elabel{fill:var(--green);font-family:var(--mono);font-size:12px}
+  .dg .cap{fill:var(--muted);font-style:italic}
+  .dg .band{fill:rgba(61,242,126,.05);stroke:#33493b;stroke-width:1.5;stroke-dasharray:6 5}
+  .dg .bandt{fill:var(--muted);font-family:var(--mono)}
+  .dg use.lg{fill:#bfe3cd}                                 /* tech logo inside a node */
+  .dg use.lg.g{fill:var(--green)}                          /* accent logo (legend / store) */
+  .dg .chip{fill:rgba(61,242,126,.10);stroke:var(--green-dim);stroke-width:1}
+  .dg .chipt{fill:var(--green);font-family:var(--mono);font-weight:700}
+  .dg .cyl{fill:#0c1a12;stroke:var(--green);stroke-width:2}
+  .dg .cyl-top{fill:#143a26;stroke:var(--green);stroke-width:2}
+  .dg .legend{fill:var(--green);font-family:var(--mono);font-weight:700}
+
+  /* ---------- NAV ---------- */
+  #counter{position:fixed;right:16px;bottom:12px;color:var(--muted);font-family:var(--mono);font-size:13px;z-index:10}
+  #hint{position:fixed;left:16px;bottom:12px;color:#33493b;font-family:var(--mono);font-size:12px;z-index:10}
+
+  /* ---------- PRINT (Save as PDF, Landscape, margins None) ---------- */
+  @page{size:1280px 720px;margin:0}
+  @media print{
+    html,body{background:#fff}
+    #stage{position:static;transform:none;width:1280px;height:auto}
+    .slide{display:block !important;position:relative;width:1280px;height:720px;page-break-after:always}
+    #counter,#hint{display:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== Brand logos (simple-icons, CC0; recolored via CSS fill) — referenced by <use> ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="lg-telegram" viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></symbol>
+  <symbol id="lg-gcloud" viewBox="0 0 24 24"><path d="M12.19 2.38a9.344 9.344 0 0 0-9.234 6.893c.053-.02-.055.013 0 0-3.875 2.551-3.922 8.11-.247 10.941l.006-.007-.007.03a6.717 6.717 0 0 0 4.077 1.356h5.173l.03.03h5.192c6.687.053 9.376-8.605 3.835-12.35a9.365 9.365 0 0 0-2.821-4.552l-.043.043.006-.05A9.344 9.344 0 0 0 12.19 2.38zm-.358 4.146c1.244-.04 2.518.368 3.486 1.15a5.186 5.186 0 0 1 1.862 4.078v.518c3.53-.07 3.53 5.262 0 5.193h-5.193l-.008.009v-.04H6.785a2.59 2.59 0 0 1-1.067-.23h.001a2.597 2.597 0 1 1 3.437-3.437l3.013-3.012A6.747 6.747 0 0 0 8.11 8.24c.018-.01.04-.026.054-.023a5.186 5.186 0 0 1 3.67-1.69z"/></symbol>
+  <symbol id="lg-gemini" viewBox="0 0 24 24"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"/></symbol>
+  <symbol id="lg-langchain" viewBox="0 0 24 24"><path d="M13.796 0a6.93 6.93 0 0 0-4.91 2.019L5.451 5.455l3.273 3.27 3.432-3.432a2.284 2.284 0 0 1 3.277 0 2.28 2.28 0 0 1 0 3.275L12 12.001l3.273 3.273 3.433-3.435c2.692-2.692 2.692-7.127 0-9.82A6.92 6.92 0 0 0 13.796 0m-5.07 8.728-3.433 3.434c-2.692 2.693-2.692 7.126 0 9.819A6.92 6.92 0 0 0 10.203 24a6.93 6.93 0 0 0 4.911-2.02l3.432-3.432-3.271-3.272-3.433 3.433a2.284 2.284 0 0 1-3.277 0 2.28 2.28 0 0 1 0-3.276L12 12z"/></symbol>
+  <symbol id="lg-bigquery" viewBox="0 0 24 24"><path d="M5.676 10.595h2.052v5.244a5.892 5.892 0 0 1-2.052-2.088v-3.156zm18.179 10.836a.504.504 0 0 1 0 .708l-1.716 1.716a.504.504 0 0 1-.708 0l-4.248-4.248a.206.206 0 0 1-.007-.007c-.02-.02-.028-.045-.043-.066a10.736 10.736 0 0 1-6.334 2.065C4.835 21.599 0 16.764 0 10.799S4.835 0 10.8 0s10.799 4.835 10.799 10.8c0 2.369-.772 4.553-2.066 6.333.025.017.052.028.074.05l4.248 4.248zm-5.028-10.632a8.015 8.015 0 1 0-8.028 8.028h.024a8.016 8.016 0 0 0 8.004-8.028zm-4.86 4.98a6.002 6.002 0 0 0 2.04-2.184v-1.764h-2.04v3.948zm-4.5.948c.442.057.887.08 1.332.072.4.025.8.025 1.2 0V7.692H9.468v9.035z"/></symbol>
+</defs></svg>
+
+<div id="stage">
+
+  <!-- ===================== 0 · TITLE ===================== -->
+  <section class="slide active">
+    <div class="cover">
+      <img class="logo" src="logo.png" alt="[AI]mbassy logo" />
+      <div class="name">[<span class="b">AI</span>]mbassy</div>
+      <div class="tag">Foreign law, in the language of the people who need it.</div>
+      <div class="sub">An agentic RAG assistant for Belarusian refugees &amp; migrants.</div>
+      <div class="meta">Generative AI Systems Design &amp; Implementation — Final Project</div>
+      <div class="meta" style="margin-top:10px">Built with <span class="by">Народныя Пасольствы</span> (People's Embassies) &nbsp;·&nbsp; Alexander Fruman</div>
+    </div>
+  </section>
+
+  <!-- ===================== 1 · BELARUS (HOOK) ===================== -->
+  <section class="slide">
+    <div class="kicker">01 · Why this exists</div>
+    <h1 class="title">A country people are <span class="hl">forced to leave</span></h1>
+    <hr class="rule" />
+    <ul class="points">
+      <li>Since the 2020 crackdown, political repression in Belarus has criminalized dissent — arrests, prosecutions, exile.</li>
+      <li>Since 2020, around <span class="em">1 million</span> Belarusians have been forced to leave their homeland — out of a population of just <span class="em">8 million</span>.</li>
+      <li>Most settled in countries near Belarus — Poland, Lithuania, Czechia, Ukraine, <span class="em">Austria</span>, Latvia, and others.</li>
+      <li>They land in a <span class="em">foreign legal system</span>, in a language they don't read, needing status fast:
+        asylum, residence, work, citizenship.</li>
+    </ul>
+    <div class="statement">For them, a wrong answer isn't an inconvenience — it can mean deportation.</div>
+    <div class="foot"><div class="brand"><img src="logo.png"/><b>[<span>AI</span>]mbassy</b></div><div>The situation in Belarus</div></div>
+  </section>
+
+  <!-- ===================== 2 · PEOPLE'S EMBASSIES + PROBLEM ===================== -->
+  <section class="slide compact">
+    <div class="kicker">02 · The problem</div>
+    <h1 class="title">When the embassy is <span class="hl">the people</span></h1>
+    <hr class="rule" />
+    <div class="cols">
+      <div class="card">
+        <h3>Народныя Пасольствы · People's Embassies</h3>
+        <ul>
+          <li>A civil-society network representing Belarusians abroad when official representation can't.</li>
+          <li>Volunteers help the diaspora with real, practical legal questions.</li>
+          <li>The domain expert behind this project labels our test set &amp; gold answers.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>The pain</h3>
+        <ul>
+          <li>Correct answers are buried in <span class="em">German-only</span> Austrian statutes (AsylG, FPG, NAG, AuslBG, StbG, NAG-DV).</li>
+          <li>Questions arrive in <span class="em">Russian / Belarusian</span> — a cross-lingual gap.</li>
+          <li>A handful of volunteer coordinators, overloaded; the same questions, repeated.</li>
+          <li>Outdated or wrong answers carry real legal consequences.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="statement">People who need Austrian legal answers can't read Austrian law — and the few who can are overwhelmed.</div>
+    <div class="foot"><div class="brand"><img src="logo.png"/><b>[<span>AI</span>]mbassy</b></div><div>People's Embassies &amp; the problem</div></div>
+  </section>
+
+  <!-- ===================== 3 · SOLUTION + REQUIREMENTS MAP ===================== -->
+  <section class="slide">
+    <div class="kicker">03 · The solution</div>
+    <h1 class="title">A bot that <span class="hl">cites the law</span> — in your language</h1>
+    <hr class="rule" />
+    <div class="cols">
+      <div>
+        <ul class="points" style="font-size:23px">
+          <li>A <span class="em">Telegram</span> assistant: asks in RU/BY → answers grounded in Austrian law, citing the exact §.</li>
+          <li>When it can't answer safely → <span class="em">honest hand-off</span> to a human coordinator.</li>
+        </ul>
+        <div class="card" style="margin-top:22px">
+          <h3>Key functionalities</h3>
+          <ul>
+            <li>Cross-lingual RAG with paragraph (§) citations</li>
+            <li>Privacy guardrail — the original message is never stored</li>
+            <li>Confidence router — answer vs. honest hand-off</li>
+            <li>Built-in analytics &amp; per-step tracing</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card">
+        <h3>How this meets the assignment</h3>
+        <table class="req">
+          <tr><td class="k">Problem <span class="pct">5%</span></td><td>Belarusian diaspora legal-aid gap (lived, specific)</td></tr>
+          <tr><td class="k">Research <span class="pct">15%</span></td><td>People's Embassies + domain expert; corpus &amp; alternatives discovery</td></tr>
+          <tr><td class="k">Architecture <span class="pct">20%</span></td><td>LangGraph agentic pipeline (next slides)</td></tr>
+          <tr><td class="k">Implementation <span class="pct">50%</span></td><td>RAG + evaluation + guardrail + router + Telegram + BigQuery</td></tr>
+          <tr><td class="k">Pitch <span class="pct">10%</span></td><td>This talk</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="foot"><div class="brand"><img src="logo.png"/><b>[<span>AI</span>]mbassy</b></div><div>Solution &amp; requirements</div></div>
+  </section>
+
+  <!-- ===================== 4-10 · STUBS (next iterations) ===================== -->
+  <section class="slide tight"><div class="kicker">04 · Architecture</div><h1 class="title">End-to-end pipeline</h1><hr class="rule"/>
+    <svg class="dg" viewBox="0 0 1120 462" style="width:100%;height:462px;display:block">
+      <defs>
+        <marker id="ahP" markerWidth="11" markerHeight="9" refX="8" refY="3" orient="auto" markerUnits="userSpaceOnUse">
+          <path d="M0,0 L9,3 L0,6 Z" fill="#3df27e"/>
+        </marker>
+      </defs>
+
+      <!-- stack badges -->
+      <use class="lg g" href="#lg-langchain" x="84" y="13" width="24" height="24"/>
+      <text class="legend" x="115" y="31" font-size="14">LangGraph</text>
+      <text class="legend" x="1004" y="31" font-size="14" text-anchor="end">Google Cloud &#183; Vertex AI</text>
+      <use class="lg g" href="#lg-gcloud" x="1008" y="11" width="24" height="24"/>
+
+      <!-- branch: refusal -->
+      <rect class="box aux" x="310" y="14" width="240" height="44" rx="10"/>
+      <text class="t" x="430" y="33" text-anchor="middle" font-size="15">Polite refusal &#8594; END</text>
+      <text class="s" x="430" y="50" text-anchor="middle" font-size="11.5">off-topic &#183; injection</text>
+
+      <!-- ROW 1 (left to right) — each node shows its Gemini model on the pill -->
+      <g>
+        <rect class="box io" x="80" y="78" width="200" height="96" rx="14"/>
+        <circle class="numbg" cx="98" cy="95" r="11"/><text class="num" x="98" y="99" text-anchor="middle" font-size="12">1</text>
+        <use class="lg" href="#lg-telegram" x="165" y="84" width="30" height="30"/>
+        <text class="t" x="180" y="138" text-anchor="middle" font-size="18">Telegram</text>
+        <rect class="chip" x="125" y="150" width="110" height="20" rx="6"/>
+        <text class="chipt" x="180" y="164" text-anchor="middle" font-size="12">Bot API · RU/BY</text>
+      </g>
+      <g>
+        <rect class="box dec" x="330" y="78" width="200" height="96" rx="14"/>
+        <circle class="numbg" cx="348" cy="95" r="11"/><text class="num" x="348" y="99" text-anchor="middle" font-size="12">2</text>
+        <use class="lg" href="#lg-gemini" x="415" y="84" width="30" height="30"/>
+        <path class="dec-glyph" d="M501,96 L510,87 L519,96 L510,105 Z"/>
+        <text class="t" x="430" y="138" text-anchor="middle" font-size="18">Guardrail</text>
+        <rect class="chip" x="375" y="150" width="110" height="20" rx="6"/>
+        <text class="chipt" x="430" y="164" text-anchor="middle" font-size="12">2.5 Flash-Lite</text>
+      </g>
+      <g>
+        <rect class="box" x="580" y="78" width="200" height="96" rx="14"/>
+        <circle class="numbg" cx="598" cy="95" r="11"/><text class="num" x="598" y="99" text-anchor="middle" font-size="12">3</text>
+        <use class="lg" href="#lg-gemini" x="665" y="84" width="30" height="30"/>
+        <text class="t" x="680" y="138" text-anchor="middle" font-size="18">Rewrite</text>
+        <rect class="chip" x="625" y="150" width="110" height="20" rx="6"/>
+        <text class="chipt" x="680" y="164" text-anchor="middle" font-size="12">2.5 Flash</text>
+      </g>
+      <g>
+        <rect class="box" x="830" y="78" width="200" height="96" rx="14"/>
+        <circle class="numbg" cx="848" cy="95" r="11"/><text class="num" x="848" y="99" text-anchor="middle" font-size="12">4</text>
+        <text class="t" x="930" y="116" text-anchor="middle" font-size="18">Retrieve</text>
+        <rect class="chip" x="884" y="126" width="92" height="20" rx="6"/>
+        <text class="chipt" x="930" y="140" text-anchor="middle" font-size="12">Chroma · RRF</text>
+        <rect class="chip" x="872" y="150" width="116" height="20" rx="6"/>
+        <text class="chipt" x="930" y="164" text-anchor="middle" font-size="12">embedding-001</text>
+      </g>
+
+      <!-- ROW 2 (right to left) -->
+      <g>
+        <rect class="box" x="830" y="236" width="200" height="96" rx="14"/>
+        <circle class="numbg" cx="848" cy="253" r="11"/><text class="num" x="848" y="257" text-anchor="middle" font-size="12">5</text>
+        <use class="lg" href="#lg-gemini" x="915" y="242" width="30" height="30"/>
+        <text class="t" x="930" y="296" text-anchor="middle" font-size="18">Rerank</text>
+        <rect class="chip" x="875" y="308" width="110" height="20" rx="6"/>
+        <text class="chipt" x="930" y="322" text-anchor="middle" font-size="12">2.5 Flash</text>
+      </g>
+      <g>
+        <rect class="box" x="580" y="236" width="200" height="96" rx="14"/>
+        <circle class="numbg" cx="598" cy="253" r="11"/><text class="num" x="598" y="257" text-anchor="middle" font-size="12">6</text>
+        <use class="lg" href="#lg-gemini" x="665" y="242" width="30" height="30"/>
+        <text class="t" x="680" y="296" text-anchor="middle" font-size="18">Generate</text>
+        <rect class="chip" x="625" y="308" width="110" height="20" rx="6"/>
+        <text class="chipt" x="680" y="322" text-anchor="middle" font-size="12">2.5 Flash</text>
+      </g>
+      <g>
+        <rect class="box dec" x="330" y="236" width="200" height="96" rx="14"/>
+        <circle class="numbg" cx="348" cy="253" r="11"/><text class="num" x="348" y="257" text-anchor="middle" font-size="12">7</text>
+        <use class="lg" href="#lg-gemini" x="415" y="242" width="30" height="30"/>
+        <path class="dec-glyph" d="M501,254 L510,245 L519,254 L510,263 Z"/>
+        <text class="t" x="430" y="296" text-anchor="middle" font-size="18">Router</text>
+        <rect class="chip" x="375" y="308" width="110" height="20" rx="6"/>
+        <text class="chipt" x="430" y="322" text-anchor="middle" font-size="12">2.5 Flash</text>
+      </g>
+      <g>
+        <rect class="box io" x="80" y="236" width="200" height="96" rx="14"/>
+        <circle class="numbg" cx="98" cy="253" r="11"/><text class="num" x="98" y="257" text-anchor="middle" font-size="12">8</text>
+        <use class="lg" href="#lg-telegram" x="165" y="242" width="30" height="30"/>
+        <text class="t" x="180" y="296" text-anchor="middle" font-size="18">Deliver</text>
+        <rect class="chip" x="125" y="308" width="110" height="20" rx="6"/>
+        <text class="chipt" x="180" y="322" text-anchor="middle" font-size="12">Bot API · RU/BY</text>
+      </g>
+
+      <!-- branch: human -->
+      <rect class="box aux" x="300" y="360" width="260" height="44" rx="10"/>
+      <text class="t" x="430" y="379" text-anchor="middle" font-size="15">Human coordinator</text>
+      <text class="s" x="430" y="396" text-anchor="middle" font-size="11.5">manual answer</text>
+
+      <!-- edges row 1 -->
+      <path class="edge" d="M280,126 L324,126" marker-end="url(#ahP)"/>
+      <path class="edge" d="M530,126 L574,126" marker-end="url(#ahP)"/>
+      <text class="elabel" x="552" y="118" text-anchor="middle">allow</text>
+      <path class="edge" d="M780,126 L824,126" marker-end="url(#ahP)"/>
+      <!-- snake down -->
+      <path class="edge" d="M930,174 L930,232" marker-end="url(#ahP)"/>
+      <!-- edges row 2 (leftward) -->
+      <path class="edge" d="M830,284 L786,284" marker-end="url(#ahP)"/>
+      <path class="edge" d="M580,284 L536,284" marker-end="url(#ahP)"/>
+      <path class="edge" d="M330,284 L286,284" marker-end="url(#ahP)"/>
+      <text class="elabel" x="308" y="276" text-anchor="middle">answer</text>
+      <!-- branch edges -->
+      <path class="edge alt" d="M430,78 L430,60" marker-end="url(#ahP)"/>
+      <text class="elabel" x="464" y="73" text-anchor="middle">blocked</text>
+      <path class="edge alt" d="M430,332 L430,358" marker-end="url(#ahP)"/>
+      <text class="elabel" x="470" y="350" text-anchor="middle">hand-off</text>
+
+      <!-- observability band -->
+      <rect class="band" x="80" y="416" width="950" height="30" rx="10"/>
+      <use class="lg g" href="#lg-bigquery" x="92" y="423" width="20" height="20"/>
+      <text class="bandt" x="568" y="435" text-anchor="middle" font-size="12.5">Observability &#8212; each node logs a privacy-safe trace &#8594; BigQuery &#183; flow_events (latency &#183; decision &#183; &#167; refs &#8212; never PII)</text>
+    </svg>
+    <div class="foot"><div class="brand"><img src="logo.png"/><b>[<span>AI</span>]mbassy</b></div><div>Pipeline</div></div></section>
+
+  <section class="slide tight"><div class="kicker">05 · Architecture</div><h1 class="title">Inside the RAG</h1><hr class="rule"/>
+    <svg class="dg" viewBox="0 0 1120 462" style="width:100%;height:462px;display:block">
+      <defs>
+        <marker id="ahR" markerWidth="11" markerHeight="9" refX="8" refY="3" orient="auto" markerUnits="userSpaceOnUse">
+          <path d="M0,0 L9,3 L0,6 Z" fill="#3df27e"/>
+        </marker>
+      </defs>
+
+      <text class="cap" x="555" y="28" text-anchor="middle" font-size="15">Question in Russian &#8594; law in German &#8594; answer in Russian, citing the exact &#167;</text>
+
+      <!-- ROW 1 (left to right) -->
+      <g>
+        <rect class="box io" x="80" y="56" width="200" height="92" rx="14"/>
+        <circle class="numbg" cx="98" cy="73" r="11"/><text class="num" x="98" y="77" text-anchor="middle" font-size="12">1</text>
+        <use class="lg" href="#lg-telegram" x="164" y="65" width="30" height="30"/>
+        <text class="t" x="180" y="116" text-anchor="middle" font-size="18">RU question</text>
+        <text class="s" x="180" y="135" text-anchor="middle" font-size="12.5">scrubbed input</text>
+      </g>
+      <g>
+        <rect class="box" x="330" y="56" width="200" height="92" rx="14"/>
+        <circle class="numbg" cx="348" cy="73" r="11"/><text class="num" x="348" y="77" text-anchor="middle" font-size="12">2</text>
+        <use class="lg" href="#lg-gemini" x="414" y="65" width="30" height="30"/>
+        <text class="t" x="430" y="116" text-anchor="middle" font-size="18">Dual query</text>
+        <text class="s" x="430" y="135" text-anchor="middle" font-size="12.5">RU + DE rewrite</text>
+      </g>
+      <g>
+        <rect class="box" x="580" y="56" width="200" height="92" rx="14"/>
+        <circle class="numbg" cx="598" cy="73" r="11"/><text class="num" x="598" y="77" text-anchor="middle" font-size="12">3</text>
+        <use class="lg" href="#lg-gemini" x="664" y="65" width="30" height="30"/>
+        <text class="t" x="680" y="116" text-anchor="middle" font-size="18">Embed &#215;2</text>
+        <text class="s" x="680" y="135" text-anchor="middle" font-size="12.5">gemini-embedding-001</text>
+      </g>
+      <g>
+        <rect class="box" x="830" y="56" width="200" height="92" rx="14"/>
+        <circle class="numbg" cx="848" cy="73" r="11"/><text class="num" x="848" y="77" text-anchor="middle" font-size="12">4</text>
+        <rect class="chip" x="894" y="68" width="72" height="24" rx="6"/>
+        <text class="chipt" x="930" y="85" text-anchor="middle" font-size="13">Chroma</text>
+        <text class="t" x="930" y="116" text-anchor="middle" font-size="18">Vector search</text>
+        <text class="s" x="930" y="135" text-anchor="middle" font-size="12.5">German-law index</text>
+      </g>
+
+      <!-- ROW 2 (right to left) -->
+      <g>
+        <rect class="box" x="830" y="206" width="200" height="92" rx="14"/>
+        <circle class="numbg" cx="848" cy="223" r="11"/><text class="num" x="848" y="227" text-anchor="middle" font-size="12">5</text>
+        <text class="t" x="930" y="258" text-anchor="middle" font-size="18">RRF fusion</text>
+        <text class="s" x="930" y="278" text-anchor="middle" font-size="12.5">merge RU + DE ranks</text>
+      </g>
+      <g>
+        <rect class="box" x="580" y="206" width="200" height="92" rx="14"/>
+        <circle class="numbg" cx="598" cy="223" r="11"/><text class="num" x="598" y="227" text-anchor="middle" font-size="12">6</text>
+        <use class="lg" href="#lg-gemini" x="664" y="215" width="30" height="30"/>
+        <text class="t" x="680" y="258" text-anchor="middle" font-size="18">Rerank</text>
+        <text class="s" x="680" y="278" text-anchor="middle" font-size="12.5">Flash &#8594; top-k</text>
+      </g>
+      <g>
+        <rect class="box" x="330" y="206" width="200" height="92" rx="14"/>
+        <circle class="numbg" cx="348" cy="223" r="11"/><text class="num" x="348" y="227" text-anchor="middle" font-size="12">7</text>
+        <use class="lg" href="#lg-gemini" x="414" y="215" width="30" height="30"/>
+        <text class="t" x="430" y="258" text-anchor="middle" font-size="18">Generate</text>
+        <text class="s" x="430" y="278" text-anchor="middle" font-size="12.5">grounded &#183; cites &#167;</text>
+      </g>
+      <g>
+        <rect class="box io" x="80" y="206" width="200" height="92" rx="14"/>
+        <circle class="numbg" cx="98" cy="223" r="11"/><text class="num" x="98" y="227" text-anchor="middle" font-size="12">8</text>
+        <use class="lg" href="#lg-telegram" x="164" y="215" width="30" height="30"/>
+        <text class="t" x="180" y="258" text-anchor="middle" font-size="18">Answer + &#167;</text>
+        <text class="s" x="180" y="278" text-anchor="middle" font-size="12.5">RU/BY &#183; &#167; 3 AsylG</text>
+      </g>
+
+      <!-- edges row 1 -->
+      <path class="edge" d="M280,102 L324,102" marker-end="url(#ahR)"/>
+      <path class="edge" d="M530,102 L574,102" marker-end="url(#ahR)"/>
+      <path class="edge" d="M780,102 L824,102" marker-end="url(#ahR)"/>
+      <!-- snake down -->
+      <path class="edge" d="M930,148 L930,202" marker-end="url(#ahR)"/>
+      <!-- edges row 2 (leftward) -->
+      <path class="edge" d="M830,252 L786,252" marker-end="url(#ahR)"/>
+      <path class="edge" d="M580,252 L536,252" marker-end="url(#ahR)"/>
+      <path class="edge" d="M330,252 L286,252" marker-end="url(#ahR)"/>
+
+      <!-- corpus & indexing callout (offline) -->
+      <rect class="band" x="80" y="330" width="920" height="126" rx="12"/>
+      <text class="legend" x="100" y="352" font-size="15">Corpus &amp; indexing (offline) &#8212; 557 chunks (552 law &#167; + 5 cases)</text>
+      <text class="bandt" x="100" y="377" font-size="12.5">Content: Austrian laws in German (AsylG &#183; FPG &#183; NAG &#183; AuslBG &#183; StbG &#183; NAG-DV) + 5 consultation cases in Russian</text>
+      <text class="bandt" x="100" y="399" font-size="12.5">Chunking: 1 &#167; = 1 chunk; long &#167; split at Absatz seams (~3000 chars, 400-char overlap)</text>
+      <text class="bandt" x="100" y="421" font-size="12.5">Enrichment per chunk: 1-line RU summary + <tspan fill="#3df27e">3 synthetic RU questions</tspan> + theme tags, embedded WITH the &#167; (cross-lingual bridge)</text>
+      <text class="bandt" x="100" y="443" font-size="12.5">Metadata per chunk: law_code &#183; &#167; &#183; title &#183; section &#183; doc_type (law/case) &#183; source_url</text>
+      <path class="edge alt" d="M1000,356 L1058,356 L1058,102 L1034,102" marker-end="url(#ahR)"/>
+      <text class="elabel" x="1075" y="230" text-anchor="middle" transform="rotate(90 1075 230)">read at query time</text>
+    </svg>
+    <div class="foot"><div class="brand"><img src="logo.png"/><b>[<span>AI</span>]mbassy</b></div><div>RAG internals</div></div></section>
+
+  <section class="slide tight"><div class="kicker">06 · Safety</div><h1 class="title">Guardrail — the privacy gate, run <span class="hl">first</span></h1><hr class="rule"/>
+    <div class="flow">
+      <div class="step io"><b>Raw message</b><small>RU / BY · never stored</small></div>
+      <div class="arr">&#8594;</div>
+      <div class="step"><b>DLP de-identify</b><small>PII &#8594; [INFO_TYPE]</small></div>
+      <div class="arr">&#8594;</div>
+      <div class="step"><b>Flash-Lite check</b><small>topic + injection</small></div>
+      <div class="arr">&#8594;</div>
+      <div class="split">
+        <div class="step io"><b>allow</b><small>&#8594; pipeline</small></div>
+        <div class="step"><b>polite refusal</b><small>off-topic / injection</small></div>
+      </div>
+    </div>
+    <div class="cols3">
+      <div class="card">
+        <h3>1 · PII scrub</h3>
+        <span class="mtag">Google DLP · deidentify</span>
+        <div class="pii"><span>PERSON</span><span>EMAIL</span><span>PHONE</span><span>ADDRESS</span><span>PASSPORT</span><span>IBAN</span><span>DOB</span><span>SVNR*</span></div>
+        <ul>
+          <li>Verified live on RU/BY — catches «Настя», «Саша», BY passports</li>
+          <li>Regex backstop* for Austrian SVNR &amp; case numbers (Zl./GZ)</li>
+          <li>City / country kept on purpose — aids legal retrieval, isn't PII</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>2 · Topic gate</h3>
+        <span class="mtag">Gemini 2.5 Flash-Lite</span>
+        <ul>
+          <li>Is it an Austrian migration / asylum / citizenship / work question?</li>
+          <li>Off-topic → polite refusal <span class="em">before any Pro call</span> (cost guard)</li>
+          <li>Sees only the scrubbed text — no PII reaches even the cheap model</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>3 · Injection filter</h3>
+        <span class="mtag">same Flash-Lite call</span>
+        <ul>
+          <li>Flags «ignore your rules» / system-prompt manipulation</li>
+          <li>Precedence: injection &gt; off-topic &gt; allow</li>
+          <li>Fails closed on topic; never false-flags injection on a parse error</li>
+        </ul>
+      </div>
+    </div>
+    <div class="statement" style="margin-top:8px;font-size:21px;padding:11px 18px">Privacy by design: the original message is <span class="em">never stored</span> — only the DLP-scrubbed text is searched, sent to the model, and logged.</div>
+    <div class="foot"><div class="brand"><img src="logo.png"/><b>[<span>AI</span>]mbassy</b></div><div>Guardrail</div></div></section>
+
+  <section class="slide tight"><div class="kicker">07 · Results</div><h1 class="title">Metrics &amp; <span class="hl">what moved them</span></h1><hr class="rule"/>
+    <div style="font-size:15.5px;color:var(--muted);margin:-2px 0 7px">Measured on <span class="em">13 control questions</span> from our domain expert at Народныя Пасольствы — gold answer + exact &#167; (11 answerable &#183; 2 must-refuse).</div>
+    <div style="font-size:15.5px;color:var(--muted);margin:0 0 12px;display:flex;align-items:center;gap:9px;flex-wrap:wrap">Answer quality = an independent <span class="em">3-model judge panel</span>, fixed 1-5 rubric:
+      <span class="pii" style="display:inline-flex;margin:0"><span>Gemini</span><span>GPT</span><span>Claude</span></span>
+      <span>— cross-checked, never self-graded.</span></div>
+    <div class="stats" style="margin-top:2px">
+      <div class="stat"><div class="big">0.57</div><div class="from">from 0.14</div><div class="lbl">Retrieval Hit@5 · ~4× (up to 5×)</div></div>
+      <div class="stat"><div class="big">0.56</div><div class="from">from 0.21</div><div class="lbl">Mean Reciprocal Rank</div></div>
+      <div class="stat"><div class="big">4.4<span style="font-size:20px">/5</span></div><div class="from">from 2.9</div><div class="lbl">In-corpus accuracy (panel)</div></div>
+      <div class="stat"><div class="big">12.5s</div><div class="from">from 23.8s</div><div class="lbl">Generate latency · &#8722;47%</div></div>
+    </div>
+    <table class="levers">
+      <tr><th>Lever</th><th>What it moved</th><th>Why (from our iterations)</th></tr>
+      <tr>
+        <td class="l">Query rewrite RU&#8594;German</td>
+        <td class="m">Hit@5 0.14 &#8594; 0.57 (~4&#215;)</td>
+        <td class="w">The RU question never matched German statutes — rewriting it to formal German was the retrieval unlock.</td>
+      </tr>
+      <tr>
+        <td class="l">Chunk enrichment — 3 RU questions / &#167;</td>
+        <td class="m">in-corpus accuracy 3.7 &#8594; 4.4</td>
+        <td class="w">Each &#167; is embedded together with lay-Russian questions → a cross-lingual bridge built into the index.</td>
+      </tr>
+      <tr>
+        <td class="l">RRF(RU+DE) + Flash reranker</td>
+        <td class="m">in-corpus quality held &#8776; 4.0</td>
+        <td class="w">Deeper candidate pool, reranked to top-k; RRF surfaces the Russian cases a German-only query misses.</td>
+      </tr>
+      <tr>
+        <td class="l">Flash generator (vs Pro)</td>
+        <td class="m">quality 4.00 &#8594; 3.97 · latency &#8722;47%</td>
+        <td class="w">Equal answer quality at half the latency and cost → Flash became the serving default.</td>
+      </tr>
+      <tr>
+        <td class="l">Confidence router</td>
+        <td class="m">routed in-corpus 3.6 &#8594; 4.0</td>
+        <td class="w">A low-confidence or dead-end answer becomes an honest hand-off, not a confident wrong one.</td>
+      </tr>
+    </table>
+    <div class="foot"><div class="brand"><img src="logo.png"/><b>[<span>AI</span>]mbassy</b></div><div>Metrics</div></div></section>
+
+  <section class="slide tight"><div class="kicker">08 · Results</div><h1 class="title">Honest results: <span class="hl">regressions</span></h1><hr class="rule"/>
+    <div class="lead">Better retrieval sometimes made the bot <span class="em">worse</span> — we kept those findings instead of hiding them. This is the core of our evaluation-driven build.</div>
+    <div class="cols3">
+      <div class="card warn">
+        <h3>Better retrieval, worse refusals</h3>
+        <span class="dchip">refuse behavior &#8722;0.61</span>
+        <div class="body">Rewriting to German lifted in-corpus accuracy <b>+0.48</b> — but the richer context made the bot overconfident. It began answering false-premise questions it should decline (q11 «residence longer than the passport»: 2.67 &#8594; 1.67).</div>
+      </div>
+      <div class="card warn">
+        <h3>The average hid the result</h3>
+        <span class="dchip">ALL flat 3.36 &#8594; 3.33</span>
+        <div class="body">One averaged score looked unchanged. Only splitting <b>in-corpus vs must-refuse</b> exposed the +0.48 / &#8722;0.61 split. Then our domain expert re-labelled the strata — which <b>flipped the conclusion</b>.</div>
+      </div>
+      <div class="card warn">
+        <h3>Fixing it was whack-a-mole</h3>
+        <span class="dchip">stopped at the noise floor</span>
+        <div class="body">The confidence router closed the refusal gap, then over-handed-off honest redirects (q09/q11). A scoped rubric fix recovered them; we stopped where n=13 turns noisy (q01 flips even at temperature 0). A judge crash even faked a refusal — now logged as an error, not a hand-off.</div>
+      </div>
+    </div>
+    <div class="statement" style="margin-top:16px;font-size:21px;padding:11px 18px">The value isn&#8217;t a pretty number — it&#8217;s that we <span class="em">measured</span>, surfaced every regression, and stopped where the data stops being trustworthy.</div>
+    <div class="foot"><div class="brand"><img src="logo.png"/><b>[<span>AI</span>]mbassy</b></div><div>Regressions</div></div></section>
+
+  <section class="slide tight"><div class="kicker">09 · Honesty</div><h1 class="title">Weaknesses &amp; <span class="hl">how we'll fix them</span></h1><hr class="rule"/>
+    <div class="lead">Where it is still weak — and the concrete next fix for each, not a wish-list.</div>
+    <table class="fixtbl">
+      <tr><th>Weakness</th><th>How we'll fix it</th></tr>
+      <tr>
+        <td class="wk"><b>q08 still leaks</b>A must-refuse question is answered confidently (router decision = answer, confidence 5 → false answer ~2.0/5).</td>
+        <td class="fx"><span class="k">Tighten</span> the false-premise rule in the router; <span class="k">add the missing topic</span> to the corpus so it becomes a grounded answer or a clean refuse; grow the must-refuse eval set.</td>
+      </tr>
+      <tr>
+        <td class="wk"><b>Retrieval edge cases</b>q03 / q06: the gold &#167; competes with a near-duplicate chunk; borderline questions stay unstable.</td>
+        <td class="fx">Cleaner chunk boundaries + more enrichment questions; a <span class="k">relevance threshold</span> on retrieved chunks; more gold labels per topic.</td>
+      </tr>
+      <tr>
+        <td class="wk"><b>Latency ~12.5s</b>Still far from the &lt;2s KPI — the answer is six sequential model calls.</td>
+        <td class="fx"><span class="k">Stream</span> the answer (first tokens fast), parallelize independent calls, cache query embeddings, skip the reranker on a small pool.</td>
+      </tr>
+      <tr>
+        <td class="wk"><b>Small eval set</b>n = 13, a single expert — a real noise floor (q01 flips), so no firm % guarantee yet.</td>
+        <td class="fx"><span class="k">Expand</span> the held-out gold set with Народныя Пасольствы; add real-user A/B; stratify per topic.</td>
+      </tr>
+    </table>
+    <div class="foot"><div class="brand"><img src="logo.png"/><b>[<span>AI</span>]mbassy</b></div><div>Weaknesses</div></div></section>
+
+  <section class="slide tight"><div class="kicker">10 · Roadmap</div><h1 class="title">Where this goes <span class="hl">next</span></h1><hr class="rule"/>
+    <div class="cols4">
+      <div class="card">
+        <div class="rmnum">01</div>
+        <h3>15 People's Embassies</h3>
+        <div class="body">Today: Austria. Next: <b style="color:var(--ink)">15 embassies / countries</b>, each with its own statutes — same pipeline, new corpus.</div>
+        <div class="imp">→ the diaspora across the EU</div>
+      </div>
+      <div class="card">
+        <div class="rmnum">02</div>
+        <h3>Automated data pipeline</h3>
+        <div class="body">One conveyor: ingest → clean → chunk → enrich → embed → index. Re-runs when laws change; today it is semi-manual scripts.</div>
+        <div class="imp">→ a new country live in hours</div>
+      </div>
+      <div class="card">
+        <div class="rmnum">03</div>
+        <h3>NLP question dashboard</h3>
+        <div class="body">Cluster what people actually ask — topics, gaps, trends — built on the privacy-safe BigQuery traces (no PII).</div>
+        <div class="imp">→ shows where to add corpus &amp; staff</div>
+      </div>
+      <div class="card">
+        <div class="rmnum">04</div>
+        <h3>Feedback loop</h3>
+        <div class="body">Thumbs up/down + coordinator corrections become new gold labels. Real usage → better answers.</div>
+        <div class="imp">→ improves with every use</div>
+      </div>
+    </div>
+    <div class="cta">
+      <div class="l"><b>From one country to a network</b> — open POC, open code, built with the people it serves.</div>
+      <div class="links">
+        <span>Telegram: <b>@AImbassy_bot</b></span>
+        <span>GitHub: <b>github.com/YurkaGagarin/aimbassy-public</b></span>
+        <span>Built with <b>Народныя Пасольствы</b></span>
+      </div>
+      <div class="qr"><img src="qr.png" alt="QR to repo" style="width:100%;height:100%;object-fit:contain;border-radius:7px"/></div>
+    </div>
+    <div class="foot"><div class="brand"><img src="logo.png"/><b>[<span>AI</span>]mbassy</b></div><div>Roadmap &amp; scale</div></div></section>
+
+</div>
+
+<div id="counter"></div>
+<div id="hint">← → / Space to navigate · F fit · P print→PDF (Landscape, margins None)</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  let i=0;
+  function show(n){i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    document.getElementById('counter').textContent=(i+1)+' / '+slides.length;}
+  function fit(){const s=Math.min(window.innerWidth/1280,window.innerHeight/720);
+    document.documentElement.style.setProperty('--scale',s);}
+  addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown',' ','PageDown'].includes(e.key)){show(i+1);e.preventDefault();}
+    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){show(i-1);e.preventDefault();}
+    else if(e.key==='Home'){show(0);} else if(e.key==='End'){show(slides.length-1);}
+    else if(e.key.toLowerCase()==='f'){fit();}
+    else if(e.key.toLowerCase()==='p'){window.print();}
+  });
+  addEventListener('resize',fit);
+  addEventListener('click',e=>{if(e.target.closest('#hint,#counter'))return; show(i+1);});
+  fit();show(0);
+</script>
+</body>
+</html>

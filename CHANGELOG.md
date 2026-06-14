@@ -1,0 +1,48 @@
+# Development changelog
+
+This public repo is a curated snapshot (no git history). The commit-by-commit development arc of the POC is preserved below, oldest first.
+
+- scaffold: project governance and planning docs
+- docs: add decision-logging rule and record Day 1 corpus cleanup
+- feat: add per-§ corpus chunker with metadata cards
+- feat: anonymize consultation cases and add them to the chunker
+- feat: embed corpus into ChromaDB and add retrieval smoke test
+- feat: end-to-end RAG answer pipeline with LangGraph and Streamlit panel
+- docs: close Day 2 in tracker/journal and flag history-scrub TODO
+- feat: expand corpus with AsylG 2005 and full FPG (163->362 chunks)
+- docs: mark corpus expansion (I5) complete in tracker
+- feat: add AuslBG to corpus (362->421 chunks)
+- docs: record eval judge choice and R8 label query for volunteers
+- corpus: ingest NAG-DV regulation (442 chunks); record eval judge panel decision
+- eval: add golden testset (13 questions) and project glossary
+- eval: retrieval baseline harness + results (Hit@5=0.14, MRR=0.21)
+- docs: correct StbG title finding (faithful to source, not a chunking bug)
+- eval: answer-quality baseline via 3-judge panel (Gemini+GPT-5.5+Claude)
+- Day 4: cross-lingual query rewrite retrieval lever + answer-quality A/B
+- Day 5.1: input guardrail node (DLP PII scrub + Flash-Lite topic/injection)
+- Day 5.2: guardrail mini-eval (3 confusion matrices on 40 synthetic messages)
+- Day 5.3-5.4: router node (grounded+actionable judge) + eval harness
+- Day 5.5a: wire guardrail + router into the LangGraph graph
+- Day 5.5b: promote rewrite to a serving module, wire it into the graph
+- docs: correct Day-4 pitch note - router is the output node, matching the built graph
+- Day 6 (core): Telegram bot (polling) + privacy-safe BigQuery analytics + rate limit
+- bot: warn the user about scrubbed PII before sending the answer
+- Corpus enrichment (lever 2): theme tags + RU summary + synthetic RU questions
+- Switch live index to enriched after answer-quality gate
+- Add per-node LangGraph trace to BigQuery flow_events
+- Add НП cases 3-5 to corpus; pin GPT-judge .env to POC/.env
+- Add RRF(RU+DE) dual-query fusion retrieval lever
+- Add Flash judge-reranker lever (stacks on RRF)
+- Measure answer quality of the RRF+rerank stack (3-judge panel)
+- Measure routed output: router does not neutralise the refuse regression
+- Relabel testset per expert and add Flash generation lever
+- Default generator to Flash (adopt lever 3)
+- Journal: record default generator switch to Flash
+- Fix router judge token cap (2048->8192) and add routed Flash measurement
+- Refine router rubric with honest-redirect exception to close the routed Flash gap
+- Add final presentation deck and bilingual speech script
+- Journal Day 7: presentation deck and bilingual speech delivered
+- Split speech script into separate RU and RTL Hebrew files
+- Prep repo for submission: add README and requirements, untrack internal journals, anonymize case city names, finalize bot handle on deck
+- Untrack internal agent config (POC/CLAUDE.md) from repo
+- Finalize slide 11: public repo link and QR code
